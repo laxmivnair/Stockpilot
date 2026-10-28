@@ -2,12 +2,17 @@ import { pool } from '../config/db.js'
 
 export const usersRepository = {
   async findByEmail(email) {
+    const clean = (email || '').trim().toLowerCase()
     const query = `
       SELECT id, email, password_hash, full_name, role, is_active, created_at, updated_at
       FROM users
-      WHERE lower(email) = lower($1)
+      WHERE lower(email) = $1
+         OR lower(email) = $1 || '@stockpilot.local'
+         OR lower(email) = replace($1, '@stockpilot.com', '@stockpilot.local')
+         OR (split_part(lower(email), '@', 1) = $1)
+      LIMIT 1
     `
-    const { rows } = await pool.query(query, [email])
+    const { rows } = await pool.query(query, [clean])
     return rows[0] || null
   },
 

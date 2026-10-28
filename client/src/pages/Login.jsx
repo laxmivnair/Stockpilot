@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
-import { Layers, AlertCircle, ShieldCheck, UserCheck, ArrowRight } from 'lucide-react'
+import { Layers, AlertCircle, ShieldCheck, UserCheck, ArrowRight, Eye, EyeOff, Info } from 'lucide-react'
 import { Button } from '../components/Button.jsx'
 
 export function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
@@ -51,9 +52,27 @@ export function Login() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-6 shadow-2xl rounded-2xl sm:px-10 border border-slate-100">
-          <div className="mb-6">
+          <div className="mb-5">
             <h3 className="text-lg font-bold text-slate-900">Sign in to your account</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Role-based authentication & session controls</p>
+            <p className="text-xs text-slate-500 mt-0.5">Type your credentials manually below, or use quick-fill</p>
+          </div>
+
+          {/* Credentials Reminder Box */}
+          <div className="mb-5 p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 space-y-1.5">
+            <div className="flex items-center gap-1.5 font-semibold text-slate-900">
+              <Info className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Standard Demo Credentials to Type:</span>
+            </div>
+            <div className="grid grid-cols-1 gap-1 text-[11px] font-mono bg-white p-2 rounded-lg border border-slate-200">
+              <p>
+                <span className="font-bold text-indigo-700">Admin:</span>{' '}
+                <span className="text-slate-800">admin</span> (or <span className="text-slate-800">admin@stockpilot.local</span>) &bull; Password: <span className="text-slate-800 font-bold">Admin123456!</span> (or <span className="text-slate-800">admin</span>)
+              </p>
+              <p>
+                <span className="font-bold text-emerald-700">Employee:</span>{' '}
+                <span className="text-slate-800">employee</span> (or <span className="text-slate-800">employee@stockpilot.local</span>) &bull; Password: <span className="text-slate-800 font-bold">Employee123456!</span> (or <span className="text-slate-800">employee</span>)
+              </p>
+            </div>
           </div>
 
           {error && (
@@ -66,29 +85,41 @@ export function Login() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Work Email
+                Email or Username
               </label>
               <input
-                type="email"
+                type="text"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@stockpilot.local"
+                placeholder="e.g. admin or admin@stockpilot.local"
+                autoComplete="username"
                 className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Password
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                  Password
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
+                >
+                  {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  <span>{showPassword ? 'Hide' : 'Show'}</span>
+                </button>
+              </div>
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••"
-                className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                placeholder="e.g. Admin123456! or admin"
+                autoComplete="current-password"
+                className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors font-mono"
               />
             </div>
 
@@ -103,10 +134,10 @@ export function Login() {
             </Button>
           </form>
 
-          {/* Quick Demo Fill Buttons for Interviewers / Evaluators */}
-          <div className="mt-6 pt-6 border-t border-slate-100">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 text-center">
-              Demo Credentials (1-Click Fill)
+          {/* Quick Demo Fill Buttons */}
+          <div className="mt-6 pt-5 border-t border-slate-100">
+            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2.5 text-center">
+              Or 1-Click Auto-Fill (Optional Shortcut)
             </p>
             <div className="grid grid-cols-2 gap-2.5">
               <button
