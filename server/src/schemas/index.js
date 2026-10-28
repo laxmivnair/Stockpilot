@@ -5,6 +5,13 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 })
 
+export const registerSchema = z.object({
+  email: z.string().trim().min(2, 'Email or username is required'),
+  password: z.string().min(1, 'Password is required'),
+  fullName: z.string().trim().optional(),
+  role: z.enum(['admin', 'employee']).default('admin'),
+})
+
 export const createUserSchema = z.object({
   email: z.string().trim().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters long'),

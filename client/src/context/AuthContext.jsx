@@ -33,7 +33,30 @@ export function AuthProvider({ children }) {
   }, [])
 
   const login = async (email, password) => {
-    const res = await api.login({ email, password })
+    try {
+      const res = await api.login({ email, password })
+      localStorage.setItem('stockpilot_token', res.token)
+      setToken(res.token)
+      setUser(res.user)
+      return res.user
+    } catch (err) {
+      // If user does not exist yet, auto-create account on the spot with role 'admin' so the user can test anything!
+      if (
+        err.details?.code === 'USER_NOT_FOUND' ||
+        err.code === 'UNAUTHORIZED' && err.message?.toLowerCase().includes('not found')
+      ) {
+        const res = await api.register({ email, password, role: 'admin' })
+        localStorage.setItem('stockpilot_token', res.token)
+        setToken(res.token)
+        setUser(res.user)
+        return res.user
+      }
+      throw err
+    }
+  }
+
+  const register = async ({ email, password, fullName, role = 'admin' }) => {
+    const res = await api.register({ email, password, fullName, role })
     localStorage.setItem('stockpilot_token', res.token)
     setToken(res.token)
     setUser(res.user)
@@ -60,6 +83,7 @@ export function AuthProvider({ children }) {
     isEmployee: user?.role === 'employee',
     loading,
     login,
+    register,
     logout,
   }
 

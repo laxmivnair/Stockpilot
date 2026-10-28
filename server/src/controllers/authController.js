@@ -1,6 +1,23 @@
 import { authService } from '../services/authService.js'
 
 export const authController = {
+  async register(req, res, next) {
+    try {
+      const result = await authService.register(req.body)
+
+      res.cookie('stockpilot_session', result.token, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        expires: result.expiresAt,
+      })
+
+      res.status(201).json(result)
+    } catch (error) {
+      next(error)
+    }
+  },
+
   async login(req, res, next) {
     try {
       const { email, password } = req.body

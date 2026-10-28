@@ -1,16 +1,70 @@
-import { verify } from 'argon2'
+import { hash, verify } from 'argon2'
 import { usersRepository } from '../repositories/usersRepository.js'
 import { sessionsRepository } from '../repositories/sessionsRepository.js'
 import { generateSessionToken, hashSessionToken } from '../utils/crypto.js'
-import { UnauthorizedError } from '../errors/AppError.js'
+import { UnauthorizedError, ConflictError } from '../errors/AppError.js'
 
 const SESSION_DURATION_DAYS = 7
 
 export const authService = {
+  async register({ email, password, fullName, role = 'admin' }) {
+    const cleanEmail = email.includes('@')
+      ? email.trim().toLowerCase()
+      : `${email.trim().toLowerCase()}@stockpilot.local`
+
+    const existing = await usersRepository.findByEmail(cleanEmail)
+    if (existing) {
+      let matches
+      try {
+        matches = await verify(existing.password_hash, password)
+      } catch {
+        matches = false
+      }
+      if (matches) {
+        return this.login(cleanEmail, password)
+      }
+      throw new ConflictError(`An account with '${cleanEmail}' already exists. Please sign in with your password.`)
+    }
+
+    const passwordHash = await hash(password)
+    const name =
+      fullName?.trim() ||
+      cleanEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) ||
+      'StockPilot User'
+
+    const user = await usersRepository.create({
+      email: cleanEmail,
+      passwordHash,
+      fullName: name,
+      role: role || 'admin',
+    })
+
+    const token = generateSessionToken()
+    const tokenHash = hashSessionToken(token)
+    const expiresAt = new Date(Date.now() + SESSION_DURATION_DAYS * 24 * 60 * 60 * 1000)
+
+    await sessionsRepository.createSession({
+      userId: user.id,
+      tokenHash,
+      expiresAt,
+    })
+
+    return {
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.full_name,
+        role: user.role,
+      },
+      expiresAt,
+    }
+  },
+
   async login(email, password) {
     const user = await usersRepository.findByEmail(email)
     if (!user) {
-      throw new UnauthorizedError('Invalid email/username or password. For demo: use "admin" or "admin@stockpilot.local" with "Admin123456!"')
+      throw new UnauthorizedError('User account not found', { code: 'USER_NOT_FOUND' })
     }
 
     if (!user.is_active) {
@@ -31,7 +85,7 @@ export const authService = {
        (user.role === 'employee' && (password === 'employee' || password === 'employee123' || password === 'Employee123!' || password === 'Employee123456!')))
 
     if (!passwordMatches && !isDevConvenience) {
-      throw new UnauthorizedError('Invalid password. For demo: use "Admin123456!" (or "admin")')
+      throw new UnauthorizedError('Invalid password. Please check your credentials.', { code: 'INVALID_PASSWORD' })
     }
 
     // Generate session token and store hash in DB

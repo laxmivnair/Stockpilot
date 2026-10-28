@@ -38,6 +38,7 @@ export async function apiRequest(endpoint, options = {}) {
 export const api = {
   // Auth
   login: (credentials) => apiRequest('/auth/login', { method: 'POST', body: JSON.stringify(credentials) }),
+  register: (data) => apiRequest('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
   getMe: () => apiRequest('/auth/me'),
   logout: () => apiRequest('/auth/logout', { method: 'POST' }),
 
