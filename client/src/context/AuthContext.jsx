@@ -32,7 +32,7 @@ export function AuthProvider({ children }) {
     verifyUser()
   }, [])
 
-  const login = async (email, password) => {
+  const login = async (email, password, preferredRole = 'admin') => {
     try {
       const res = await api.login({ email, password })
       localStorage.setItem('stockpilot_token', res.token)
@@ -40,12 +40,12 @@ export function AuthProvider({ children }) {
       setUser(res.user)
       return res.user
     } catch (err) {
-      // If user does not exist yet, auto-create account on the spot with role 'admin' so the user can test anything!
+      // If user does not exist yet, auto-create account on the spot with the chosen role!
       if (
         err.details?.code === 'USER_NOT_FOUND' ||
-        err.code === 'UNAUTHORIZED' && err.message?.toLowerCase().includes('not found')
+        (err.code === 'UNAUTHORIZED' && err.message?.toLowerCase().includes('not found'))
       ) {
-        const res = await api.register({ email, password, role: 'admin' })
+        const res = await api.register({ email, password, role: preferredRole })
         localStorage.setItem('stockpilot_token', res.token)
         setToken(res.token)
         setUser(res.user)
